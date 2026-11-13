@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Sequencer Pro</title>
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0b0e">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered successfully!'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="background-effects">
+        <div class="noise-overlay"></div>
+    </div>
+
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+        <button id="btn-lang-id" class="lang-btn active">ID</button>
+        <button id="btn-lang-en" class="lang-btn">EN</button>
+    </div>
+
+    <main class="app-container">
+        
+        <!-- View 1: Introduction -->
+        <section id="intro-view" class="view active">
+            <div class="glass-panel text-center">
+                <div class="logo-container">
+                    <img src="icon.png" alt="Band Sequencer Pro Icon" class="app-logo-img">
+                </div>
+                <h1 class="monochrome-text" data-i18n="app_title">Band Sequencer Pro</h1>
+                <p class="intro-desc" data-i18n="app_desc">
+                    Platform live sequencer interaktif untuk band Anda. Sinkronisasi multitrack audio secara real-time tanpa ribet.
+                </p>
+                <div class="action-grid">
+                    <div class="action-card" id="btn-host-flow">
+                        <div class="action-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <h3 data-i18n="create_room">Buat Room</h3>
+                        <p data-i18n="create_room_desc">Sebagai Host: Atur sesi dan bagikan audio multitrack ke anggota.</p>
+                    </div>
+                    <div class="action-card" id="btn-join-flow">
+                        <div class="action-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        </div>
+                        <h3 data-i18n="join_room">Gabung Room</h3>
+                        <p data-i18n="join_room_desc">Sebagai Anggota: Masuk dengan Room ID untuk sinkronisasi otomatis.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 1.5: Join Room -->
+        <section id="join-view" class="view">
+            <div class="glass-panel text-left-mobile">
+                <h2 data-i18n="join_room">Gabung ke Room</h2>
+                <div class="form-group">
+                    <label for="join-user-name" data-i18n="your_name">Nama Anda</label>
+                    <input type="text" id="join-user-name" data-i18n-placeholder="name_placeholder" placeholder="Misal: John" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="join-user-role" data-i18n="your_role">Peran di Band</label>
+                    <select id="join-user-role" class="custom-select">
+                        <option value="Vocal" data-i18n="role_vocal">Vocal</option>
+                        <option value="Lead Guitar" data-i18n="role_lead_guitar">Lead Guitar</option>
+                        <option value="Rhythm Guitar" data-i18n="role_rhythm_guitar">Rhythm Guitar</option>
+                        <option value="Bass" data-i18n="role_bass">Bass</option>
+                        <option value="Drum" data-i18n="role_drum">Drum</option>
+                        <option value="Keyboard" data-i18n="role_keyboard">Keyboard</option>
+                        <option value="Other" data-i18n="role_other">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="join-room-id">Room ID</label>
+                    <input type="text" id="join-room-id" data-i18n-placeholder="room_id_placeholder" placeholder="Masukkan Room ID..." autocomplete="off">
+                </div>
+                <div class="actions split-actions">
+                    <button class="btn-secondary btn-back-intro" data-i18n="back">Kembali</button>
+                    <button id="btn-join-room" class="btn-primary" data-i18n="connect" disabled>Connect</button>
+                </div>
+                <div id="join-status" class="status-text"></div>
+            </div>
+        </section>
+
+        <!-- View 2: Setup Room (Host) -->
+        <section id="setup-view" class="view">
+            <div class="glass-panel text-left-mobile">
+                <h2 data-i18n="setup_room">Setup Room</h2>
+                <div class="form-group">
+                    <label for="band-name" data-i18n="band_session_name">Nama Band / Sesi Latihan</label>
+                    <input type="text" id="band-name" data-i18n-placeholder="band_name_placeholder" placeholder="Misal: Latihan Studio Sabtu" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="host-user-name" data-i18n="your_name">Nama Anda</label>
+                    <input type="text" id="host-user-name" data-i18n-placeholder="name_placeholder" placeholder="Misal: John" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="host-user-role" data-i18n="your_role">Peran di Band</label>
+                    <select id="host-user-role" class="custom-select">
+                        <option value="Vocal" data-i18n="role_vocal">Vocal</option>
+                        <option value="Lead Guitar" data-i18n="role_lead_guitar">Lead Guitar</option>
+                        <option value="Rhythm Guitar" data-i18n="role_rhythm_guitar">Rhythm Guitar</option>
+                        <option value="Bass" data-i18n="role_bass">Bass</option>
+                        <option value="Drum" data-i18n="role_drum">Drum</option>
+                        <option value="Keyboard" data-i18n="role_keyboard">Keyboard</option>
+                        <option value="Other" data-i18n="role_other">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="actions split-actions">
+                    <button class="btn-secondary btn-back-intro" data-i18n="back">Kembali</button>
+                    <button id="btn-create-room" class="btn-primary" data-i18n="create_room" disabled>Buat Room</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 3: Player (Lobby) -->
+        <section id="player-view" class="view">
+            <div class="player-panel">
+                <header class="player-header">
+                    <div class="header-left">
+                        <h2 id="display-band-name" class="monochrome-text"></h2>
+                        <p class="welcome-text" id="welcome-message"></p>
+                        
+                        <div class="room-badges">
+                            <div class="badge role-badge" id="role-badge">Host</div>
+                            <div class="badge room-id-badge" id="room-id-display">ID: <span class="highlight" id="room-id-text">Loading...</span> <button id="btn-copy-id" class="btn-copy" title="Copy ID"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="connected-users" title="Anggota Terhubung">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <span id="user-count">1</span>
+                        </div>
+                        <button id="btn-reset" class="btn-icon btn-danger" title="Keluar Room">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </header>
+
+                <div id="users-list-container" class="users-list">
+                    <!-- Band members list injected here -->
+                </div>
+
+                <div id="client-waiting-msg" class="alert-info hidden">
+                    <div class="spinner-small"></div>
+                    <span data-i18n="waiting_host">Menunggu Host menyiapkan audio multitrack...</span>
+                </div>
+
+                <div class="setlist-header" id="setlist-header-container">
+                    <div class="setlist-title-group">
+                        <h3 data-i18n="setlist">Setlist Lagu</h3>
+                        <div id="total-setlist-duration" class="total-duration-badge">⏱️ Total: 00:00</div>
+                    </div>
+                    <div id="host-add-song-container" class="hidden">
+                        <button id="btn-host-add-song" class="btn-secondary" data-i18n="add_song">+ Tambah Lagu Baru</button>
+                    </div>
+                </div>
+
+                <div id="setlist-container" class="setlist">
+                    <!-- Sequencer slots injected by JS -->
+                </div>
+                
+            </div>
+        </section>
+        
+        <!-- Fullscreen Loading Overlay -->
+        <div id="loading-overlay" class="overlay hidden">
+            <div class="glass-panel loading-panel text-center">
+                <div class="spinner-large"></div>
+                <h3 id="loading-text" data-i18n="preparing">Mempersiapkan...</h3>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container"></div>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
